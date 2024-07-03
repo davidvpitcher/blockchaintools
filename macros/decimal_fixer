@@ -1,0 +1,49 @@
+function onOpen() {
+  var ui = DocumentApp.getUi();
+  ui.createMenu('Custom Scripts')
+    .addItem('Fix Crypto Amounts', 'fixCryptoAmounts')
+    .addToUi();
+}
+
+function fixCryptoAmounts() {
+  var body = DocumentApp.getActiveDocument().getBody();
+  applyFixedDecimalForPattern(body, "Amount: ");
+  Logger.log('Script completed');
+}
+
+function applyFixedDecimalForPattern(body, searchString) {
+  Logger.log('Using search string: ' + searchString);
+
+  var foundElement = body.findText(searchString);
+  while (foundElement) {
+    var textElement = foundElement.getElement().asText();
+    var startOffset = foundElement.getStartOffset();
+    var text = textElement.getText();
+    var amountStart = text.indexOf(searchString, startOffset) + searchString.length;
+    var amountEnd = text.indexOf(" ", amountStart); // Find the end of the amount
+    var tokenEnd = text.indexOf(" ", amountEnd + 1); // Find the end of the token (BTC or ETH)
+
+    if (tokenEnd == -1) {
+      tokenEnd = text.length;
+    }
+
+    var amount = text.substring(amountStart, amountEnd).replace(/,/g, ''); // Remove any commas
+    var token = text.substring(amountEnd + 1, tokenEnd);
+
+    var fixedAmount = parseFloat(amount).toFixed(4);
+
+    Logger.log('Found amount: ' + amount);
+    Logger.log('Fixed amount: ' + fixedAmount);
+
+    // Replace the amount and preserve bold formatting
+    textElement.deleteText(amountStart, tokenEnd - 1);
+    textElement.insertText(amountStart, fixedAmount + " " + token);
+    textElement.setBold(amountStart, amountStart + fixedAmount.length + token.length + 1, true);
+
+    foundElement = body.findText(searchString, foundElement);
+  }
+}
+
+function runTest() {
+  fixCryptoAmounts();
+}
