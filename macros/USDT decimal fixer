@@ -1,0 +1,92 @@
+function onOpen() {
+  var ui = DocumentApp.getUi();
+  ui.createMenu('Custom Scripts')
+    .addItem('Format Amounts', 'formatAmounts')
+    .addToUi();
+}
+
+function formatAmounts() {
+  var body = DocumentApp.getActiveDocument().getBody();
+  var paragraphs = body.getParagraphs();
+
+  // Define patterns
+  var usdtPattern = /Amount:\s*([\d,]+(?:\.\d{0,7})?)\s*USDT/gi;
+  var usdcPattern = /Amount:\s*([\d,]+(?:\.\d{0,7})?)\s*USDC/gi;
+
+  Logger.log('Processing ' + paragraphs.length + ' paragraphs');
+
+  // Process each paragraph
+  for (var i = 0; i < paragraphs.length; i++) {
+    var elements = paragraphs[i].getNumChildren();
+    for (var j = 0; j < elements; j++) {
+      var element = paragraphs[i].getChild(j);
+      if (element.getType() == DocumentApp.ElementType.TEXT) {
+        var textElement = element.asText();
+        var text = textElement.getText();
+        Logger.log('Processing element ' + (j + 1) + ': ' + text);
+
+        // Replace USDT amounts
+        text = replacePattern(textElement, usdtPattern, 2, '', 'USDT');
+
+        // Replace USDC amounts
+        text = replacePattern(textElement, usdcPattern, 2, '', 'USDC');
+
+        Logger.log('Updated text: ' + textElement.getText());
+      }
+    }
+  }
+
+  Logger.log('Script completed');
+}
+
+function replacePattern(textElement, pattern, decimalPlaces, prefix, suffix) {
+  var text = textElement.getText();
+  var match;
+  while ((match = pattern.exec(text)) !== null) {
+    var amount = parseFloat(match[1].replace(/,/g, '')).toFixed(decimalPlaces);
+    var formattedAmount = `${prefix}${formatNumber(amount)}`;
+    var replacement = `Amount: ${formattedAmount} ${suffix}`;
+    var startOffset = match.index;
+    var endOffset = startOffset + match[0].length - 1;
+
+    // Get the attributes of the original text
+    var originalAttributes = textElement.getAttributes(startOffset);
+
+    textElement.deleteText(startOffset, endOffset);
+    textElement.insertText(startOffset, replacement);
+
+    // Apply original formatting to the new text
+    textElement.setAttributes(startOffset, startOffset + replacement.length - 1, originalAttributes);
+
+    // Specifically format the "Amount: " part as black
+    var labelAttributes = {
+      [DocumentApp.Attribute.FOREGROUND_COLOR]: '#000000'
+    };
+    textElement.setAttributes(startOffset, startOffset + 6, labelAttributes); // Length of "Amount: "
+
+    // Specifically format the number part as bold and black
+    var numberStartOffset = startOffset + 8; // Length of "Amount: $"
+    var numberEndOffset = numberStartOffset + formattedAmount.length - 1;
+    var numberAttributes = {
+      [DocumentApp.Attribute.BOLD]: true,
+      [DocumentApp.Attribute.FOREGROUND_COLOR]: '#000000'
+    };
+    textElement.setAttributes(numberStartOffset, numberEndOffset, numberAttributes);
+
+    // Specifically format the token part as bold and black
+    var tokenStartOffset = numberEndOffset + 1; // Space after number
+    var tokenEndOffset = tokenStartOffset + suffix.length - 1;
+    var tokenAttributes = {
+      [DocumentApp.Attribute.BOLD]: true,
+      [DocumentApp.Attribute.FOREGROUND_COLOR]: '#000000'
+    };
+    textElement.setAttributes(tokenStartOffset, tokenEndOffset + 1, tokenAttributes);
+
+    text = textElement.getText(); // Update text after modification
+  }
+  return text;
+}
+
+function formatNumber(num) {
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
