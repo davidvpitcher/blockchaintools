@@ -1,0 +1,57 @@
+function onOpen() {
+  var ui = DocumentApp.getUi();
+  ui.createMenu('Custom Scripts')
+    .addItem('Bold Exchange Addresses', 'boldExchangeAddresses')
+    .addToUi();
+}
+
+function boldExchangeAddresses() {
+  var body = DocumentApp.getActiveDocument().getBody();
+  var exchanges = ["MEXC", "Coinbase", "Binance", "OKX", "Crypto.com", "Huione", "Tokenlon", "imToken", "Gemini", "DODO", "BTSE", "HTX", "Wintermute", "Revolut", "Blofin", "Sellix", "Kucoin", "EigenFX", "Kraken", "Robinhood", "Coinhako", "Bybit", "Bitkub", "Gate.IO", "Gate.io"];
+
+  exchanges.forEach(function(exchange) {
+    applyBoldForPattern(body, "From Suspect’s " + exchange + " Address #", "Suspect’s " + exchange + " Address #");
+    applyBoldForPattern(body, "From Suspect's " + exchange + " Address #", "Suspect's " + exchange + " Address #");
+    applyBoldForPattern(body, "From Victim’s " + exchange + " Address #", "Victim’s " + exchange + " Address #");
+    applyBoldForPattern(body, "From Victim's " + exchange + " Address #", "Victim's " + exchange + " Address #");
+    applyBoldForPattern(body, "To Suspect’s " + exchange + " Address #", "Suspect’s " + exchange + " Address #");
+    applyBoldForPattern(body, "To Suspect's " + exchange + " Address #", "Suspect's " + exchange + " Address #");
+    applyBoldForPattern(body, "To Victim’s " + exchange + " Address #", "Victim’s " + exchange + " Address #");
+    applyBoldForPattern(body, "To Victim's " + exchange + " Address #", "Victim's " + exchange + " Address #");
+  });
+
+  Logger.log('Script completed');
+}
+
+function applyBoldForPattern(body, searchString, boldString) {
+  Logger.log('Using search string: ' + searchString);
+
+  var foundElement = body.findText(searchString);
+  while (foundElement) {
+    var textElement = foundElement.getElement().asText();
+    var startOffset = foundElement.getStartOffset();
+    var text = textElement.getText();
+    var boldStart = text.indexOf(boldString, startOffset);
+    var boldEnd = boldStart + boldString.length;
+
+    Logger.log('Found match: ' + text.substring(boldStart, boldEnd));
+    Logger.log('Applying bold from ' + boldStart + ' to ' + (boldEnd - 1));
+
+    // Bold the text
+    textElement.setBold(boldStart, boldEnd - 1, true);
+    
+    // Check if there's a digit at the end and bold it
+    var nextChar = text.charAt(boldEnd);
+    while (nextChar.match(/\d/)) {
+      textElement.setBold(boldEnd, boldEnd, true);
+      boldEnd++;
+      nextChar = text.charAt(boldEnd);
+    }
+
+    foundElement = body.findText(searchString, foundElement);
+  }
+}
+
+function runTest() {
+  boldExchangeAddresses();
+}
