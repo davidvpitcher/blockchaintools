@@ -1,0 +1,84 @@
+function onOpen() {
+  var ui = DocumentApp.getUi();
+  ui.createMenu('Custom Scripts')
+    .addItem('Color Suspects Addresses', 'colorSuspectsAddresses')
+    .addItem('Color Exchange Addresses', 'colorExchangeAddresses')
+    .addItem('Color Victims Addresses', 'colorVictimsAddresses')
+    .addToUi();
+}
+
+function colorSuspectsAddresses() {
+  var body = DocumentApp.getActiveDocument().getBody();
+  var color = '#fec013';
+
+  // Run the function for each variation
+  applyColorForPattern(body, "Suspect’s Address #", color);
+  applyColorForPattern(body, "Suspect's Address #", color);
+  applyColorForPattern(body, "Suspect’s address #", color);
+  applyColorForPattern(body, "Suspect's address #", color);
+
+  Logger.log('Script completed');
+}
+
+function colorExchangeAddresses() {
+  var body = DocumentApp.getActiveDocument().getBody();
+  var color = '#55c8fc';
+  var exchanges = ["MEXC", "Coinbase", "Binance", "OKX", "Crypto.com", "Huione", "Tokenlon", "imToken", "Gemini", "DODO", "BTSE", "HTX", "Wintermute", "Revolut", "Blofin", "Sellix", "Kucoin", "EigenFX", "Kraken", "Robinhood", "Coinhako", "Bybit", "Bitkub", "Gate.IO", "Gate.io", "Luno", "ChangeNow", "Changenow", "AlphaPo", "Coinspaid", "Circle.com", "Curve", "Curve.fi", "Curve.FI", "Uphold"];
+
+  exchanges.forEach(function(exchange) {
+    applyColorForPattern(body, "Suspect’s " + exchange + " Address #", color);
+    applyColorForPattern(body, "Suspect's " + exchange + " Address #", color);
+    applyColorForPattern(body, "Suspect’s " + exchange + " address #", color);
+    applyColorForPattern(body, "Suspect's " + exchange + " address #", color);
+    applyColorForPattern(body, "Victim’s " + exchange + " Address #", color);
+    applyColorForPattern(body, "Victim's " + exchange + " Address #", color);
+    applyColorForPattern(body, "Victim’s " + exchange + " address #", color);
+    applyColorForPattern(body, "Victim's " + exchange + " address #", color);
+  });
+
+  Logger.log('Script completed');
+}
+
+function colorVictimsAddresses() {
+  var body = DocumentApp.getActiveDocument().getBody();
+  var color = '#fec013';
+
+  // Run the function for each variation
+  applyColorForPattern(body, "Victim’s Address #", color);
+  applyColorForPattern(body, "Victim's Address #", color);
+  applyColorForPattern(body, "Victim’s address #", color);
+  applyColorForPattern(body, "Victim's address #", color);
+
+  Logger.log('Script completed');
+}
+
+function applyColorForPattern(body, searchString, color) {
+  Logger.log('Using search string: ' + searchString);
+
+  var foundElement = body.findText(searchString);
+  while (foundElement) {
+    var textElement = foundElement.getElement().asText();
+    var startOffset = foundElement.getStartOffset();
+    var endOffset = startOffset + searchString.length;
+
+    // Check for digits after the search string
+    var nextChar = textElement.getText().substring(endOffset, endOffset + 1);
+    while (nextChar.match(/\d/)) {
+      endOffset++;
+      nextChar = textElement.getText().substring(endOffset, endOffset + 1);
+    }
+
+    Logger.log('Found match: ' + textElement.getText().substring(startOffset, endOffset));
+    Logger.log('Applying color from ' + startOffset + ' to ' + (endOffset - 1));
+
+    textElement.setForegroundColor(startOffset, endOffset - 1, color);
+
+    foundElement = body.findText(searchString, foundElement);
+  }
+}
+
+function runTest() {
+  colorSuspectsAddresses();
+  colorExchangeAddresses();
+  colorVictimsAddresses();
+}
